@@ -5,3 +5,27 @@
 project.properties
 .classpath
 
+android/.settings/org.eclipse.jdt.core.prefs
+android/bin/AndroidManifest.xml
+android/bin/classes.dex
+android/bin/jarlist.cache
+android/bin/resources.ap_
+android/bin/slap-me.apk
+android/bin/classes/hackathon/slap_me/BuildConfig.class
+android/bin/classes/hackathon/slap_me/R$attr.class
+android/bin/classes/hackathon/slap_me/R$dimen.class
+android/bin/classes/hackathon/slap_me/R$drawable.class
+android/bin/classes/hackathon/slap_me/R$id.class
+android/bin/classes/hackathon/slap_me/R$layout.class
+android/bin/classes/hackathon/slap_me/R$menu.class
+android/bin/classes/hackathon/slap_me/R$string.class
+android/bin/classes/hackathon/slap_me/R$style.class
+android/bin/classes/hackathon/slap_me/R.class
+android/bin/classes/hackathon/slapme/main/MainActivity.class
+android/bin/dexedLibs/android-support-v4-d802f46b963a6f58317ccd5a0fc437ac.jar
+android/bin/res/crunch/drawable-hdpi/ic_launcher.png
+android/bin/res/crunch/drawable-mdpi/ic_launcher.png
+android/bin/res/crunch/drawable-xhdpi/ic_launcher.png
+android/bin/res/crunch/drawable-xxhdpi/ic_launcher.png
+android/gen/hackathon/slap_me/BuildConfig.java
+android/gen/hackathon/slap_me/R.java
