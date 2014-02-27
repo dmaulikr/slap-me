@@ -27,5 +27,3 @@ android/bin/res/crunch/drawable-hdpi/ic_launcher.png
 android/bin/res/crunch/drawable-mdpi/ic_launcher.png
 android/bin/res/crunch/drawable-xhdpi/ic_launcher.png
 android/bin/res/crunch/drawable-xxhdpi/ic_launcher.png
-android/gen/hackathon/slap_me/BuildConfig.java
-android/gen/hackathon/slap_me/R.java
