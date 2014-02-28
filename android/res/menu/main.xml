@@ -5,5 +5,20 @@
         android:orderInCategory="100"
         android:showAsAction="never"
         android:title="@string/action_settings"/>
-
+    <item
+        android:id="@+id/action_timer"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/take_photo_timer"/>
+	<item
+        android:id="@+id/action_front"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/take_photo_front"/>
+	<item
+        android:id="@+id/action_back"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:title="@string/take_photo_back"/>
+	
 </menu>

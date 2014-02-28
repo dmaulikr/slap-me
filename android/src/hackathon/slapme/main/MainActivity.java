@@ -1,32 +1,42 @@
 package hackathon.slapme.main;
 
 import hackathon.slap_me.R;
+import hackathon.slapme.service.Film;
+import hackathon.slapme.service.ImageService;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.Size;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Environment;
+import android.provider.MediaStore;
+import android.provider.MediaStore.Video;
 import android.util.Log;
 import android.view.Menu;
-import android.view.Surface;
+import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 public class MainActivity extends Activity {
 
@@ -37,14 +47,20 @@ public class MainActivity extends Activity {
 	private Camera mCameraBack;
 	private Preview mPreviewBack;
 	
-	private CountDownTimer countDownTimer;
+	private CountDownTimer countDownTimer;	
+	private TextView textViewMain;
+	
+	private static List<String> fileNames;
+	
+	private static File getMediaStorageDirectory(){
+		return new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "MyCameraApp");
+	}
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		mPreviewFront = new Preview(this);
-		mPreviewBack = new Preview(this);				
+		textViewMain = (TextView)findViewById(R.id.textview_main);
 	}
 
 	@Override
@@ -53,42 +69,146 @@ public class MainActivity extends Activity {
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
+	
+	// handle menu click
+	@Override
+	public boolean onOptionsItemSelected(final MenuItem item) {
+		// Handle item selection
+		switch (item.getItemId()) {
 
-	public void takePhotoTimer(View view) {						
+		case R.id.action_back:
+			takePhotoBack();
+			return true;
+		case R.id.action_front:
+			takePhotoFront();
+			return true;
+		case R.id.action_timer:
+			takePhotoTimer();
+			return true;
+		default:
+			return super.onOptionsItemSelected(item);
+		}
+	}
+	
+	public void btnPhotoTimer(View view) {						
+		takePhotoTimer();
+	}
+	
+	public void takePhotoTimer() {
+		increment = 0;
+		fileNames = new ArrayList<String>();
 		
-		countDownTimer = new CountDownTimer(10000,1000){
+		setCountDownTimer(new CountDownTimer(20000,1000){
 			boolean cameraSide = false;
-					
 		    public void onTick(long millisUntilFinished) {
 		        if(cameraSide == false){
 		        	 Log.e("Photo", "Taken Front as " + millisUntilFinished);	
-		     		 safeCameraOpen(Camera.CameraInfo.CAMERA_FACING_FRONT);
-		    		 mPreviewFront.setFrontCamera();
 		        	 takePhotoFront();
 		        	 cameraSide = true;
 		         } else {
 		        	 Log.e("Photo", "Taken Back as " + millisUntilFinished);
-		     		 safeCameraOpen(Camera.CameraInfo.CAMERA_FACING_BACK);
-		    		 mPreviewBack.setBackCamera();
 		        	 takePhotoBack();
 		        	 cameraSide = false;
 		         }
 		     }
-
-		     public void onFinish() {
-		         
+		    public void onFinish() {	
+		    	 combinePhotos();
+		    	 increment = -1;
 		     }
-		  }.start();
+		  }.start());
+	}
+	
+	public void combinePhotos() {
+		File mediaStorageDir = getMediaStorageDirectory();
+		int combineIncrement = 1;
+		
+		File fileOne = null;
+		File fileTwo = null;
+		Bitmap combined;
+		List<String> outputFiles = new ArrayList<String>();
+		
+		for(String fileName : fileNames){
+			if(fileOne == null) {
+				Log.e("Image","Loading One");
+				textViewMain.setText("Loading Photos (Slap Me).");
+				fileOne = new File(mediaStorageDir + "/" + fileName);
+			} else if ( fileTwo == null ){
+				fileTwo = new File(mediaStorageDir + "/" + fileName);
+				Log.e("Image","Loading Two");
+				if(fileOne != null && fileTwo != null) {
+					textViewMain.setText("Combining Photos. (Slap You)");
+					combined = ImageService.combineImages(fileOne, fileTwo);
+					Log.e("Image","Combining");
+					String outputFilename = mediaStorageDir + "/Combined_" + combineIncrement + ".jpg";
+					ImageService.saveBitmapToFile(outputFilename , combined);
+					outputFiles.add(outputFilename);
+					Log.e("Image","Output Combined");
+					combineIncrement++;
+					fileOne.delete();
+					fileTwo.delete();
+					fileOne = null;
+					fileTwo = null;
+				}
+			}
+		}
+		
+		String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+		File outputVideo = new File(mediaStorageDir + "/CombinedOn" + timeStamp + ".mp4");
+		Film film = null;
+				
+		try {
+			Log.e("Film","Create");
+			textViewMain.setText("Creating Video. (Slap Your Mum)");
+			film = new Film(outputVideo);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		for(String fileName : outputFiles){
+			Log.e("Film","Create frame from Bitmap");
+			fileOne = new File(fileName);
+			Bitmap output = ImageService.loadScaledBitmapFromFile(fileOne);
+			try {
+				film.encodeImage(output);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			output.recycle();
+			Log.e("Film","Added Frame");
+			textViewMain.setText("Adding frames.");
+		}
+		
+		try {
+			film.finish();
+			textViewMain.setText("Finished Yo. Slap Chat It");
+			Log.e("Film","Finished");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		if (mediaStorageDir.isDirectory()) {
+	        String[] children = mediaStorageDir.list();
+	        for (int i = 0; i < children.length; i++) {
+	            if(!children[i].contains("CombinedOn")) {
+	            	new File(mediaStorageDir, children[i]).delete();
+	            }
+	        }
+	    }
+		
+		Intent intent = createShareIntent(outputVideo.getAbsolutePath());
+		startActivity(Intent.createChooser(intent, "Share this with your Mum?"));		
 	}
 	
 	public void btnPhotoFront(View view) {
-		safeCameraOpen(Camera.CameraInfo.CAMERA_FACING_FRONT);
-		mPreviewFront.setFrontCamera();	
 		takePhotoFront();
 	}
 	
 	public void takePhotoFront() {
 		try {		
+			textViewMain.setText("Takening Photo Front. (Slap Me)");
+			mPreviewFront = new Preview(this);
+			safeCameraOpen(Camera.CameraInfo.CAMERA_FACING_FRONT);
+			mPreviewFront.setFrontCamera();	
 			mCameraFront.takePicture(null, null, mPictureFront);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -96,13 +216,15 @@ public class MainActivity extends Activity {
 	}
 	
 	public void btnPhotoBack(View view) {	
-		safeCameraOpen(Camera.CameraInfo.CAMERA_FACING_BACK);
-		mPreviewBack.setBackCamera();	
 		takePhotoBack();
 	}
 
 	public void takePhotoBack() {
 		try {	
+			textViewMain.setText("Takening Photo Back. (Slap Your Mum)");
+			mPreviewBack = new Preview(this);	
+			safeCameraOpen(Camera.CameraInfo.CAMERA_FACING_BACK);
+			mPreviewBack.setBackCamera();	
 			mCameraBack.takePicture(null, null, mPictureBack);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -112,56 +234,77 @@ public class MainActivity extends Activity {
     PictureCallback mPictureBack = new PictureCallback() {
         @Override
         public void onPictureTaken(byte[] data, Camera camera) {
-            File pictureFile = getOutputMediaFile();
-            if (pictureFile == null) {
-                return;
-            }
-            try {
-                FileOutputStream fos = new FileOutputStream(pictureFile);
-                fos.write(data);
-                fos.close();
-            } catch (FileNotFoundException e) {
-
-            } catch (IOException e) {
-            }
+        	PictureTaken(data);
         }
     };
 	
     PictureCallback mPictureFront = new PictureCallback() {
         @Override
-        public void onPictureTaken(byte[] data, Camera camera) {
-            File pictureFile = getOutputMediaFile();
-            if (pictureFile == null) {
-                return;
-            }
-            try {
-                FileOutputStream fos = new FileOutputStream(pictureFile);
-                fos.write(data);
-                fos.close();
-            } catch (FileNotFoundException e) {
-
-            } catch (IOException e) {
-            }
+        public void onPictureTaken(byte[] data, Camera camera) { 
+        	PictureTaken(data);
         }
     };
     
+    private void PictureTaken(byte[] data) {    	
+    	File pictureFile;
+    	
+    	if(increment != -1) {
+        	String fileName = String.valueOf(increment);
+        	increment++;
+        	pictureFile = getOutputMediaFile(fileName);	
+        } else {
+        	pictureFile = getOutputMediaFile();
+        }
+    	
+        if (pictureFile == null) {
+            return;
+        }
+        
+        textViewMain.setText("Photo Taken.");
+        
+        try {
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            fos.write(data);
+            fos.close();
+        } catch (FileNotFoundException e) {
+
+        } catch (IOException e) {
+        }
+    }
+    
+    private static int increment;
+    
     private static File getOutputMediaFile() {
-        File mediaStorageDir = new File(
-                Environment
-                        .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                "MyCameraApp");
+    	File mediaStorageDir = getMediaStorageDirectory();
         if (!mediaStorageDir.exists()) {
             if (!mediaStorageDir.mkdirs()) {
                 Log.d("MyCameraApp", "failed to create directory");
                 return null;
             }
         }
+        
         // Create a media file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
-                .format(new Date());
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());                
         File mediaFile;
-        mediaFile = new File(mediaStorageDir.getPath() + File.separator
-                + "IMG_" + timeStamp + ".jpg");
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + "IMG_" + timeStamp + ".jpg");
+
+        return mediaFile;
+    }
+    
+    private static File getOutputMediaFile(String filename) {
+        File mediaStorageDir = getMediaStorageDirectory();
+        if (!mediaStorageDir.exists()) {
+            if (!mediaStorageDir.mkdirs()) {
+                Log.d("MyCameraApp", "failed to create directory");
+                return null;
+            }
+        }
+                                
+        File mediaFile;
+        String fileName = "IMG_" + increment + ".jpg";
+        fileNames.add(fileName);       
+        
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + fileName);
 
         return mediaFile;
     }
@@ -225,8 +368,12 @@ public class MainActivity extends Activity {
 	}
 
 	private void releaseCameraAndPreview() {
-		mPreviewBack.stopBackPreviewAndFreeCamera();
-		mPreviewFront.stopFrontPreviewAndFreeCamera();		
+		if(mPreviewBack != null) {
+			mPreviewBack.stopBackPreviewAndFreeCamera();
+		}
+		if(mPreviewFront != null) {
+			mPreviewFront.stopFrontPreviewAndFreeCamera();
+		}
 	}
 	
 	class Preview extends ViewGroup implements SurfaceHolder.Callback {
@@ -249,6 +396,9 @@ public class MainActivity extends Activity {
 	        	mCameraFront.release();
 	        
 	        	mCameraFront = null;
+	        	
+	        	mSurfaceView = null;
+	        	mHolder.getSurface().release();
 	        }
 	    }
 	    
@@ -264,8 +414,10 @@ public class MainActivity extends Activity {
 	            // applications. Applications should release the camera immediately
 	            // during onPause() and re-open() it during onResume()).
 	            mCameraBack.release();
-	        
 	            mCameraBack = null;
+	            
+	            mSurfaceView = null;
+	            mHolder.getSurface().release();
 	        }
 	    }
 	    
@@ -310,7 +462,6 @@ public class MainActivity extends Activity {
 
 	        mSurfaceView = new SurfaceView(context);
 	        addView(mSurfaceView);
-	        //mSurfaceView = (SurfaceView)findViewById(R.id.surfaceview_top);
 
 	        // Install a SurfaceHolder.Callback so we get notified when the
 	        // underlying surface is created and destroyed.
@@ -363,15 +514,31 @@ public class MainActivity extends Activity {
 		protected void onLayout(boolean changed, int l, int t, int r, int b) {
 		}
 	}
-	
-	public int getScreenWidth() {
-		RelativeLayout rlMain = (RelativeLayout)findViewById(R.id.relativelayout_main);
-		return rlMain.getWidth();
+
+	public CountDownTimer getCountDownTimer() {
+		return countDownTimer;
+	}
+
+	public void setCountDownTimer(CountDownTimer countDownTimer) {
+		this.countDownTimer = countDownTimer;
 	}
 	
-	public int getScreenHeight() {
-		RelativeLayout rlMain = (RelativeLayout)findViewById(R.id.relativelayout_main);
-		return rlMain.getHeight();
-	}
-	
+	private Intent createShareIntent(String pathToVideo) {
+	    
+	    ContentValues content = new ContentValues(4);
+	    content.put(Video.VideoColumns.TITLE, "Slap Chatted");
+	    content.put(Video.VideoColumns.DATE_ADDED,
+	    System.currentTimeMillis() / 1000);
+	    content.put(Video.Media.MIME_TYPE, "video/mp4");
+	    content.put(MediaStore.Video.Media.DATA, pathToVideo);
+	    ContentResolver resolver = getContentResolver();
+	    Uri uri = resolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+	    content);
+
+	    Intent intent = new Intent(Intent.ACTION_SEND);
+	    intent.setType("video/*");
+	    intent.putExtra(Intent.EXTRA_STREAM, uri);
+	    return intent;
+	    //startActivity(Intent.createChooser(intent, "Share using"));
+	}  
 }
