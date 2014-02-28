@@ -83,8 +83,7 @@ public class Film {
 	    H264Utils.encodeMOVPacket(result, spsList, ppsList);
 
 	    // Add packet to video track
-	    outTrack.addFrame(new MP4Packet(result, frameNo, 1, 25, frameNo, true,
-	            null, frameNo, 0));
+	    outTrack.addFrame(new MP4Packet(result, frameNo * 2, 1, 8, frameNo, true, null, frameNo, 0));
 	    frameNo++;
 	}
 

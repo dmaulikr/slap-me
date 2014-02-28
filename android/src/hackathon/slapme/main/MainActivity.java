@@ -19,6 +19,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.Size;
@@ -35,6 +36,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -61,6 +63,15 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		textViewMain = (TextView)findViewById(R.id.textview_main);
+		
+		View titleView = getWindow().findViewById(android.R.id.title);
+	    if (titleView != null) {
+	      ViewParent parent = titleView.getParent();
+	      if (parent != null && (parent instanceof View)) {
+	        View parentView = (View)parent;
+	        parentView.setBackgroundColor(Color.parseColor("#f6ee31"));
+	      }
+	    }
 	}
 
 	@Override
@@ -167,7 +178,7 @@ public class MainActivity extends Activity {
 		for(String fileName : outputFiles){
 			Log.e("Film","Create frame from Bitmap");
 			fileOne = new File(fileName);
-			Bitmap output = ImageService.loadScaledBitmapFromFile(fileOne);
+			Bitmap output = ImageService.loadBitmapFromFile(fileOne);
 			try {
 				film.encodeImage(output);
 			} catch (IOException e) {
@@ -302,10 +313,8 @@ public class MainActivity extends Activity {
                                 
         File mediaFile;
         String fileName = "IMG_" + increment + ".jpg";
-        fileNames.add(fileName);       
-        
+        fileNames.add(fileName);               
         mediaFile = new File(mediaStorageDir.getPath() + File.separator + fileName);
-
         return mediaFile;
     }
     

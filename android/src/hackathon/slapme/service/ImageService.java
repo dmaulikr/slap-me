@@ -17,7 +17,7 @@ public class ImageService {
 	public ImageService() {}
 	
 	public static Bitmap combineImages(File c, File s) {
-		return combineImages(loadAndRotateBitmapFromFile(c),loadAndRotateBitmapFromFile(s));
+		return combineImages(loadScaledAndRotatedBitmapFromFile(c),loadScaledAndRotatedBitmapFromFile(s));
 	}
 	
 	public static Bitmap combineImages(Bitmap c, Bitmap s) 
@@ -78,6 +78,40 @@ public class ImageService {
 		return bitmap;
 		
 	} 
+	
+	public static Bitmap loadScaledAndRotatedBitmapFromFile(File file) {
+		if (file == null) {
+			throw new IllegalArgumentException("file = " + file);
+		}
+		final BitmapFactory.Options options = new BitmapFactory.Options();
+
+	    // Calculate inSampleSize
+	    options.inSampleSize = 8;
+
+	    // Decode bitmap with inSampleSize set
+	    options.inJustDecodeBounds = false;
+	    
+	    Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);	
+		ExifInterface exif = null;
+		
+		try {
+			exif = new ExifInterface(file.getPath());			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		int rotation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);  
+		int rotationInDegrees = exifToDegrees(rotation);
+		
+		Matrix matrix = new Matrix();
+		if (rotation != 0f) {
+			matrix.preRotate(rotationInDegrees);
+		}
+		
+		Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+		bitmap.recycle();
+		return rotated;
+	}
 	
 	public static Bitmap loadAndRotateBitmapFromFile(File file) {
 		if (file == null) {
