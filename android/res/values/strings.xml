@@ -4,6 +4,8 @@
     <string name="app_name">slap_me</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-    <string name="take_photo">Take Photo</string>
+    <string name="take_photo_back">Take Photo Back</string>
+    <string name="take_photo_front">Take Photo Front</string>
+	<string name="take_photo_timer">Take Photo Timer</string>
 
 </resources>
