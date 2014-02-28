@@ -73,6 +73,12 @@
 
 @property (nonatomic) int countToTwo;
 
+@property (nonatomic, retain) NSArray *imutableArrayOfImages;
+
+@property (nonatomic) int forFrameRate;
+
 - (IBAction)takePicture:(id)sender;
 - (IBAction)startStop:(id)sender;
+
+
 @end

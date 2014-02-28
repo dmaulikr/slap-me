@@ -158,9 +158,10 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
 
 - (IBAction)takePicture:(id)sender
 {
+    NSTimer *timerToStop;
     if (!_isTakingPictures) {
         _isTakingPictures = YES;
-        takePictureButton.title = @"Filming";
+        takePictureButton.title = @"Snaping";
         _pictureTimer = [NSTimer scheduledTimerWithTimeInterval: .2
                                                          target: self
                                                        selector:@selector(takePictureForTimer)
@@ -170,12 +171,14 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
         
         
         
-
+timerToStop = [NSTimer scheduledTimerWithTimeInterval:10 target:self selector:@selector(stopAndFinish) userInfo:nil repeats:NO];
+        
         
     } else {
         _isTakingPictures = NO;
-        takePictureButton.title = @"Contintue filming";
+        takePictureButton.title = @"Contintue snaping";
         [_pictureTimer invalidate];
+        [timerToStop invalidate];
     }
    
 }
@@ -233,6 +236,19 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
         // initiate a still image capture, return immediately
         // the completionHandler is called when a sample buffer has been captured
         AVCaptureConnection *stillImageConnection = [stillImageOutput connectionWithMediaType:AVMediaTypeVideo];
+    
+//    CMTimeShow(stillImageConnection.videoMinFrameDuration);
+//    CMTimeShow(stillImageConnection.videoMaxFrameDuration);
+//    
+//    if (stillImageConnection.isVideoMinFrameDurationSupported)
+//        stillImageConnection.videoMinFrameDuration = CMTimeMake(1, 5);
+//    if (stillImageConnection.isVideoMaxFrameDurationSupported)
+//        stillImageConnection.videoMaxFrameDuration = CMTimeMake(1, 5);
+//    
+//    CMTimeShow(stillImageConnection.videoMinFrameDuration);
+//    CMTimeShow(stillImageConnection.videoMaxFrameDuration);
+    
+    
         [stillImageOutput captureStillImageAsynchronouslyFromConnection:stillImageConnection
                                                       completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *__strong error) {
                                                           
@@ -267,7 +283,7 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
                                                               
 //                                                              [self saveImage:[self scaleImage:image toSize:CGSizeMake(768, 1280)] withIndex:_countToTwo];
                                                               
-                                                              [_arrayOfImages addObject:[self scaleImage:image toSize:CGSizeMake(768, 1280)]];
+                                                              [_arrayOfImages addObject:[self scaleImage:image toSize:CGSizeMake(200, 300)]];
 
                                                               
 //                                                              UIImage *usePreviousImage;
@@ -388,22 +404,22 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
 - (void)saveMovieToCameraRoll
 {
     // save the movie to the camera roll
-	ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
+//	ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
 	//NSLog(@"writing \"%@\" to photos album", outputURL);
-	[library writeVideoAtPathToSavedPhotosAlbum:outputURL
-								completionBlock:^(NSURL *assetURL, NSError *error) {
-									if (error) {
-										NSLog(@"assets library failed (%@)", error);
-									}
-									else {
-										[[NSFileManager defaultManager] removeItemAtURL:outputURL error:&error];
-										if (error)
-											NSLog(@"Couldn't remove temporary movie file \"%@\"", outputURL);
-									}
-									outputURL = nil;
-								}];
+//	[library writeVideoAtPathToSavedPhotosAlbum:outputURL
+//								completionBlock:^(NSURL *assetURL, NSError *error) {
+//									if (error) {
+//										NSLog(@"assets library failed (%@)", error);
+//									}
+//									else {
+//										[[NSFileManager defaultManager] removeItemAtURL:outputURL error:&error];
+//										if (error)
+//											NSLog(@"Couldn't remove temporary movie file \"%@\"", outputURL);
+//									}
+//									outputURL = nil;
+//								}];
     
-    for (int i = 0; i < [_arrayOfImages count]-2; i+=2) {
+    for (int i = 0; i < [_arrayOfImages count]-1; i+=2) {
         
         UIImage *firstImage = [_arrayOfImages objectAtIndex:i];
         UIImage *secondImage = [_arrayOfImages objectAtIndex:i+1];
@@ -427,6 +443,7 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
     }
     
     [self showPreviewAnimation];
+    
 
 //    [_arrayOfImages removeAllObjects];
     
@@ -441,6 +458,135 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
 //    [animatedImageView startAnimating];
 }
 
+
+-(void)writeImageAsMovie:(NSArray *)array toPath:(NSString*)path size:(CGSize)size duration:(int)duration
+{
+    NSError *error = nil;
+    AVAssetWriter *videoWriter = [[AVAssetWriter alloc] initWithURL:[NSURL fileURLWithPath:path]
+                                                           fileType:AVFileTypeMPEG4
+                                                              error:&error];
+    NSParameterAssert(videoWriter);
+    
+    NSDictionary *videoSettings = [NSDictionary dictionaryWithObjectsAndKeys:
+                                   AVVideoCodecH264, AVVideoCodecKey,
+                                   [NSNumber numberWithInt:size.width], AVVideoWidthKey,
+                                   [NSNumber numberWithInt:size.height], AVVideoHeightKey,
+                                   nil];
+    AVAssetWriterInput* writerInput = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo
+                                                                          outputSettings:videoSettings] ;
+    
+    AVAssetWriterInputPixelBufferAdaptor *adaptor = [AVAssetWriterInputPixelBufferAdaptor assetWriterInputPixelBufferAdaptorWithAssetWriterInput:writerInput
+                                                                                                                     sourcePixelBufferAttributes:nil];
+    NSParameterAssert(writerInput);
+    NSParameterAssert([videoWriter canAddInput:writerInput]);
+    [videoWriter addInput:writerInput];
+    
+    
+    //Start a session:
+    [videoWriter startWriting];
+    [videoWriter startSessionAtSourceTime:kCMTimeZero];
+    
+    CVPixelBufferRef buffer = NULL;
+    buffer = [self pixelBufferFromCGImage:[[array objectAtIndex:0] CGImage] size:CGSizeMake(480, 320)];
+    CVPixelBufferPoolCreatePixelBuffer (NULL, adaptor.pixelBufferPool, &buffer);
+    
+    _forFrameRate += 1;
+    CMTime frameTime = CMTimeMake(1, duration);
+    CMTime lastTime = CMTimeMake(_forFrameRate, duration);
+    
+    
+    CMTime presentTime = CMTimeAdd(lastTime, frameTime);
+    NSLog(@"presentTime = %f",CMTimeGetSeconds(presentTime));
+    
+    [adaptor appendPixelBuffer:buffer withPresentationTime:kCMTimeZero];
+    int i = 0;
+    while (writerInput.readyForMoreMediaData) // every iteration i add my CGImage to buffer, but after 5th iteration readyForMoreMediaData sets to NO, Why???
+    {
+        NSLog(@"inside for loop %d",i);
+        CMTime frameTime = CMTimeMake(1, 10);
+        CMTime lastTime=CMTimeMake(i, 100);
+        CMTime presentTime=CMTimeAdd(lastTime, frameTime);
+        
+        if (i >= [array count])
+        {
+            buffer = NULL;
+        }
+        else
+        {
+            buffer = [self pixelBufferFromCGImage:[[array objectAtIndex:i] CGImage] size:CGSizeMake(480, 320)];
+        }
+        //CVBufferRetain(buffer);
+        
+        if (buffer)
+        {
+            // append buffer
+            [adaptor appendPixelBuffer:buffer withPresentationTime:presentTime];
+            i++;
+        }
+        else
+        {
+            // done!
+            
+            //Finish the session:
+            [writerInput markAsFinished];
+            [videoWriter finishWriting];
+            
+            CVPixelBufferPoolRelease(adaptor.pixelBufferPool);
+          
+            NSLog (@"Done");
+            // [imageArray removeAllObjects];
+            
+            break;
+            
+            
+        }
+    }
+    
+}
+
+-(void)cleanUp
+{
+    _imutableArrayOfImages = nil;
+    [self cleanFileFromDocyments:@"png"];
+    [self cleanFileFromDocyments:@"mp4"];
+}
+
+-(CVPixelBufferRef) pixelBufferFromCGImage:(CGImageRef)image size:(CGSize)size
+{
+    NSDictionary *options = [NSDictionary dictionaryWithObjectsAndKeys:
+                             [NSNumber numberWithBool:YES], kCVPixelBufferCGImageCompatibilityKey,
+                             [NSNumber numberWithBool:YES], kCVPixelBufferCGBitmapContextCompatibilityKey,
+                             nil];
+    CVPixelBufferRef pxbuffer = NULL;
+    CVReturn status = CVPixelBufferCreate(kCFAllocatorDefault, size.width,
+                                          size.height, kCVPixelFormatType_32ARGB, (__bridge CFDictionaryRef) options,
+                                          &pxbuffer);
+    status=status;//Added to make the stupid compiler not show a stupid warning.
+    NSParameterAssert(status == kCVReturnSuccess && pxbuffer != NULL);
+    
+    CVPixelBufferLockBaseAddress(pxbuffer, 0);
+    void *pxdata = CVPixelBufferGetBaseAddress(pxbuffer);
+    NSParameterAssert(pxdata != NULL);
+    
+    CGColorSpaceRef rgbColorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef context = CGBitmapContextCreate(pxdata, size.width,
+                                                 size.height, 8, 4*size.width, rgbColorSpace,
+                                                 kCGImageAlphaNoneSkipFirst);
+    NSParameterAssert(context);
+    
+    //CGContextTranslateCTM(context, 0, CGImageGetHeight(image));
+    //CGContextScaleCTM(context, 1.0, -1.0);//Flip vertically to account for different origin
+    
+    CGContextDrawImage(context, CGRectMake(0, 0, CGImageGetWidth(image),
+                                           CGImageGetHeight(image)), image);
+    CGColorSpaceRelease(rgbColorSpace);
+    CGContextRelease(context);
+    
+    CVPixelBufferUnlockBaseAddress(pxbuffer, 0);
+    
+    return pxbuffer;
+}
+
 -(void)showPreviewAnimation
 {
     
@@ -449,27 +595,42 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
     
     NSLog(@"image paths: %@", pngs);
     
-    UIImageView * animatedImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 400,600)];
+    UIImageView * animatedImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, 320,440)];
     animatedImageView.contentMode  = UIViewContentModeScaleAspectFit;
     animatedImageView.clipsToBounds = YES;
     
     NSMutableArray *arrayOfImages = [[NSMutableArray alloc] init];
     
-    for (int i = 0; i < [pngs count]-1; i++) {
+    for (int i = 0; i < [pngs count]; i++) {
         NSLog(@"number %d is ok", i);
         NSLog(@"image named: %@", [pngs objectAtIndex:i]);
         NSString *fullPath = [pngs objectAtIndex:i];
         NSLog(@"fullPath %@", fullPath);
-        NSString *strippedPath  = [fullPath stringByDeletingLastPathComponent];
-        NSLog(@"stripptedPath %@", strippedPath);
-        [arrayOfImages addObject:[UIImage imageNamed:strippedPath]];
+//        NSString *strippedPath  = [fullPath stringByDeletingLastPathComponent];
+//        NSLog(@"stripptedPath %@", strippedPath);
+        [arrayOfImages addObject:[UIImage imageWithContentsOfFile:fullPath]];
     }
+
+    NSLog(@"our array of images %@", arrayOfImages);
+    _imutableArrayOfImages = [arrayOfImages copy];
+    
+    [self performSelectorInBackground:@selector(saveVideoForSelectorCall) withObject:nil];
     [animatedImageView setAnimationImages:arrayOfImages] ;
-        animatedImageView.animationDuration =  5;
+        animatedImageView.animationDuration =  3;
         animatedImageView.animationRepeatCount = 1;
         [self.view addSubview: animatedImageView];
         [animatedImageView startAnimating];
 
+}
+
+-(void)saveVideoForSelectorCall
+{
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    NSString* path = [documentsDirectory stringByAppendingPathComponent:@"newVideo.mp4" ];
+     [self writeImageAsMovie:_imutableArrayOfImages toPath:path size:CGSizeMake(480, 320) duration:5];
+    
+    [self performSelector:@selector(cleanUp) withObject:nil afterDelay:3];
 }
 
 - (IBAction)startStop:(id)sender
@@ -482,8 +643,11 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
 			assetWriter = nil;
 			[self saveMovieToCameraRoll];
 		}
-		[sender setTitle:@"Start"];
+		[sender setTitle:@"Get Ready!"];
 		[takePictureButton setEnabled:NO];
+        
+
+        
 	}
 	else {
 		[sender setTitle:@"Finish"];
@@ -491,6 +655,11 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
 		
 	}
 	started = !started;
+}
+
+-(void)stopAndFinish {
+    [self takePicture:nil];
+    [self startStop:nil];
 }
 
 - (void)didReceiveMemoryWarning
@@ -506,6 +675,12 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
     [super viewDidLoad];
 	[self setupAVCapture];
     
+    [self cleanFileFromDocyments:@"png"];
+    [self cleanFileFromDocyments:@"mp4"];
+    
+    _forFrameRate = 1;
+
+    
     _arrayOfImages = [[NSMutableArray alloc] initWithCapacity:0];
     
     _isTakingPictures = NO;
@@ -514,6 +689,25 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
     
     _countToTwo = 0;
 	// Do any additional setup after loading the view, typically from a nib.
+}
+
+-(void)cleanFileFromDocyments:(NSString *)ext
+{
+    NSString *extension = ext;
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    
+    NSArray *contents = [fileManager contentsOfDirectoryAtPath:documentsDirectory error:NULL];
+    NSEnumerator *e = [contents objectEnumerator];
+    NSString *filename;
+    while ((filename = [e nextObject])) {
+        
+        if ([[filename pathExtension] isEqualToString:extension]) {
+            
+            [fileManager removeItemAtPath:[documentsDirectory stringByAppendingPathComponent:filename] error:NULL];
+        }
+    }
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation

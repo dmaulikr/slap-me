@@ -10,6 +10,9 @@
 		35FB880618BFB22000D47850 /* CreateVideoFromArrray.m in Sources */ = {isa = PBXBuildFile; fileRef = 35FB880518BFB22000D47850 /* CreateVideoFromArrray.m */; };
 		35FB880818BFB53800D47850 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35FB880718BFB53800D47850 /* ImageIO.framework */; };
 		35FB880A18BFB54900D47850 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 35FB880918BFB54900D47850 /* CoreFoundation.framework */; };
+		6E13ACDF18C0AAE300AD0914 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E13ACDE18C0AAE300AD0914 /* CoreVideo.framework */; };
+		6EE499DC18C0DB6700817CE2 /* SplashExported.png in Resources */ = {isa = PBXBuildFile; fileRef = 6EE499DB18C0DB6700817CE2 /* SplashExported.png */; };
+		6EE499DE18C0DBE600817CE2 /* Icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 6EE499DD18C0DBE600817CE2 /* Icon.png */; };
 		72F508CF1399CC2A003DFA1F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72F508CE1399CC2A003DFA1F /* UIKit.framework */; };
 		72F508D11399CC2A003DFA1F /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72F508D01399CC2A003DFA1F /* Foundation.framework */; };
 		72F508D31399CC2A003DFA1F /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72F508D21399CC2A003DFA1F /* CoreGraphics.framework */; };
@@ -30,6 +33,9 @@
 		35FB880518BFB22000D47850 /* CreateVideoFromArrray.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CreateVideoFromArrray.m; sourceTree = "<group>"; };
 		35FB880718BFB53800D47850 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		35FB880918BFB54900D47850 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		6E13ACDE18C0AAE300AD0914 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
+		6EE499DB18C0DB6700817CE2 /* SplashExported.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = SplashExported.png; sourceTree = "<group>"; };
+		6EE499DD18C0DBE600817CE2 /* Icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Icon.png; sourceTree = "<group>"; };
 		72F508CA1399CC2A003DFA1F /* StopNGo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StopNGo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		72F508CE1399CC2A003DFA1F /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		72F508D01399CC2A003DFA1F /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -54,6 +60,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6E13ACDF18C0AAE300AD0914 /* CoreVideo.framework in Frameworks */,
 				35FB880A18BFB54900D47850 /* CoreFoundation.framework in Frameworks */,
 				35FB880818BFB53800D47850 /* ImageIO.framework in Frameworks */,
 				72F5093A1399DD9C003DFA1F /* CoreMedia.framework in Frameworks */,
@@ -71,6 +78,8 @@
 		72F508BF1399CC2A003DFA1F = {
 			isa = PBXGroup;
 			children = (
+				6EE499DB18C0DB6700817CE2 /* SplashExported.png */,
+				6EE499DD18C0DBE600817CE2 /* Icon.png */,
 				35FB880418BFB22000D47850 /* CreateVideoFromArrray.h */,
 				35FB880518BFB22000D47850 /* CreateVideoFromArrray.m */,
 				72F508D41399CC2A003DFA1F /* StopNGo */,
@@ -90,6 +99,7 @@
 		72F508CD1399CC2A003DFA1F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				6E13ACDE18C0AAE300AD0914 /* CoreVideo.framework */,
 				35FB880918BFB54900D47850 /* CoreFoundation.framework */,
 				35FB880718BFB53800D47850 /* ImageIO.framework */,
 				72F509391399DD9C003DFA1F /* CoreMedia.framework */,
@@ -156,7 +166,7 @@
 				LastUpgradeCheck = 0420;
 				TargetAttributes = {
 					72F508C91399CC2A003DFA1F = {
-						DevelopmentTeam = S82A2B8VN7;
+						DevelopmentTeam = 53VEAMVJFA;
 					};
 				};
 			};
@@ -182,10 +192,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6EE499DE18C0DBE600817CE2 /* Icon.png in Resources */,
 				72F508D91399CC2A003DFA1F /* InfoPlist.strings in Resources */,
 				72F508E21399CC2A003DFA1F /* MainStoryboard_iPhone.storyboard in Resources */,
 				72F508E51399CC2A003DFA1F /* MainStoryboard_iPad.storyboard in Resources */,
 				72F508E71399CC2A003DFA1F /* StopNGoViewController.h in Resources */,
+				6EE499DC18C0DB6700817CE2 /* SplashExported.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,8 +313,8 @@
 		72F508EE1399CC2A003DFA1F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "iPhone Distribution: Associated Newspapers Limited";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Associated Newspapers Limited";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "StopNGo/StopNGo-Prefix.pch";
 				INFOPLIST_FILE = "StopNGo/StopNGo-Info.plist";
